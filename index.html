@@ -111,6 +111,27 @@
       background: #FDE047;
       border-radius: 10px;
     }
+
+    /* Nuevos estilos para la pantalla completa mágica */
+    .fullscreen-card-overlay {
+      position: fixed !important;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw !important;
+      height: 100dvh !important;
+      max-width: none !important;
+      z-index: 60 !important;
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      margin: 0 !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+    }
+    
+    .card-zoom-transition {
+      transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    }
   </style>
 </head>
 
@@ -157,7 +178,8 @@
   <main class="relative z-20 w-full max-w-5xl mx-auto px-4 py-6 flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12 min-h-[calc(100vh-140px)]">
 
     <!-- Left Column: The 3D Pop-Out Bouquet Showcase -->
-    <div class="perspective-container w-full max-w-[420px] sm:max-w-[460px] flex justify-center items-center py-4">
+    <!-- Se agregó el id="cardWrapper" para el efecto de pantalla completa -->
+    <div id="cardWrapper" class="perspective-container w-full max-w-[420px] sm:max-w-[460px] flex justify-center items-center py-4 transition-all">
       <div id="card3D" class="card-3d relative w-full aspect-[4/5] rounded-[36px] glass-card p-6 shadow-2xl flex flex-col justify-between items-center cursor-pointer border-2 border-white/80 overflow-visible group">
         
         <!-- Subtle Card Decorative Aura -->
@@ -498,7 +520,7 @@
 
   <script>
     /* ==========================================================
-       1. INTERACTIVE 3D PARALLAX & TILT EFFECT
+       1. INTERACTIVE 3D PARALLAX & TILT EFFECT (CON MODO PANTALLA COMPLETA)
        ========================================================== */
     const card3D = document.getElementById('card3D');
     const bouquetContainer = document.getElementById('bouquetContainer');
@@ -509,46 +531,34 @@
     let isZoomed = false;
 
     function applyCardTilt(xPercent, yPercent) {
-      const rotateX = (yPercent * -26).toFixed(2);
-      const rotateY = (xPercent * 26).toFixed(2);
+      // Ajuste de escala dependiendo del dispositivo para la pantalla completa
+      const scale = isZoomed ? (window.innerWidth < 640 ? 1.15 : 1.35) : 1;
+      // Reducimos la agresividad de la rotación cuando está en pantalla completa
+      const tiltM = isZoomed ? 8 : 26; 
 
-      if (!isZoomed) {
-        card3D.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-        if (bouquetLayer) {
-          const transX = (xPercent * 22).toFixed(2);
-          const transY = (yPercent * 22).toFixed(2);
-          bouquetLayer.style.transform = `translate3d(${transX}px, ${transY}px, 65px) scale(1.06)`;
-        }
-        if (ribbonLayer) {
-          const transX = (xPercent * 30).toFixed(2);
-          const transY = (yPercent * 30).toFixed(2);
-          ribbonLayer.style.transform = `translate3d(${transX}px, ${transY}px, 95px) scale(1.12)`;
-        }
-      } else {
-        // Modo Expandido: El ramo sale agresivamente de la pantalla manteniendo movimiento
-        card3D.style.transform = `rotateX(${(yPercent * -10).toFixed(2)}deg) rotateY(${(xPercent * 10).toFixed(2)}deg)`;
-        if (bouquetLayer) {
-          const transX = (xPercent * 40).toFixed(2);
-          const transY = (yPercent * 40).toFixed(2);
-          bouquetLayer.style.transform = `translate3d(${transX}px, ${transY}px, 200px) scale(1.8)`;
-        }
-        if (ribbonLayer) {
-          const transX = (xPercent * 50).toFixed(2);
-          const transY = (yPercent * 50).toFixed(2);
-          ribbonLayer.style.transform = `translate3d(${transX}px, ${transY}px, 240px) scale(1.9)`;
-        }
+      const rotateX = (yPercent * -tiltM).toFixed(2);
+      const rotateY = (xPercent * tiltM).toFixed(2);
+
+      card3D.style.transform = `scale(${scale}) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+      if (bouquetLayer) {
+        const transX = (xPercent * 22).toFixed(2);
+        const transY = (yPercent * 22).toFixed(2);
+        bouquetLayer.style.transform = `translate3d(${transX}px, ${transY}px, 65px) scale(1.06)`;
+      }
+      if (ribbonLayer) {
+        const transX = (xPercent * 30).toFixed(2);
+        const transY = (yPercent * 30).toFixed(2);
+        ribbonLayer.style.transform = `translate3d(${transX}px, ${transY}px, 95px) scale(1.12)`;
       }
     }
 
     function resetCardTilt() {
-      card3D.style.transform = `rotateX(0deg) rotateY(0deg)`;
-      if (!isZoomed) {
-        if (bouquetLayer) bouquetLayer.style.transform = `translate3d(0px, 0px, 65px) scale(1.06)`;
-        if (ribbonLayer) ribbonLayer.style.transform = `translate3d(0px, 0px, 95px) scale(1.12)`;
-      } else {
-        if (bouquetLayer) bouquetLayer.style.transform = `translate3d(0px, 0px, 200px) scale(1.8)`;
-        if (ribbonLayer) ribbonLayer.style.transform = `translate3d(0px, 0px, 240px) scale(1.9)`;
-      }
+      const scale = isZoomed ? (window.innerWidth < 640 ? 1.15 : 1.35) : 1;
+      card3D.style.transform = `scale(${scale}) rotateX(0deg) rotateY(0deg)`;
+      
+      if (bouquetLayer) bouquetLayer.style.transform = `translate3d(0px, 0px, 65px) scale(1.06)`;
+      if (ribbonLayer) ribbonLayer.style.transform = `translate3d(0px, 0px, 95px) scale(1.12)`;
     }
 
     window.addEventListener('mousemove', (e) => {
@@ -574,6 +584,7 @@
       const yPercent = Math.max(-1, Math.min(1, (touch.clientY - cardCenterY) / (window.innerHeight * 0.4)));
       applyCardTilt(xPercent, yPercent);
     }, { passive: true });
+    
     window.addEventListener('touchend', () => {
       setTimeout(() => { isTouchActive = false; resetCardTilt(); }, 900);
     });
@@ -633,13 +644,12 @@
         this.isBurst = isBurst;
         this.life = isBurst ? 90 + Math.random() * 40 : 10000;
 
-        // Sunflower / Yellow colors
         const colorPalette = [
-          { r: 253, g: 224, b: 71 },  // yellow-300
-          { r: 250, g: 204, b: 21 },  // yellow-400
-          { r: 234, g: 179, b: 8 },   // yellow-500
-          { r: 254, g: 240, b: 138 }, // yellow-200
-          { r: 255, g: 255, b: 255 }  // spark white
+          { r: 253, g: 224, b: 71 },
+          { r: 250, g: 204, b: 21 },
+          { r: 234, g: 179, b: 8 },
+          { r: 254, g: 240, b: 138 },
+          { r: 255, g: 255, b: 255 }
         ];
         this.color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
       }
@@ -722,7 +732,7 @@
       heart.style.transform = 'translate(-50%, -50%) scale(0.6)';
       heart.style.fontSize = `${Math.floor(Math.random() * 18 + 20)}px`;
       heart.style.pointerEvents = 'none';
-      heart.style.zIndex = '60';
+      heart.style.zIndex = '100'; // Asegurar que salgan sobre todo
       heart.style.transition = 'all 1.2s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
       document.body.appendChild(heart);
 
@@ -737,8 +747,21 @@
       setTimeout(() => { if (heart.parentNode) heart.parentNode.removeChild(heart); }, 1300);
     }
 
+    // CLIC PARA PANTALLA COMPLETA
     card3D.addEventListener('click', (e) => {
       isZoomed = !isZoomed;
+      
+      const cardWrapper = document.getElementById('cardWrapper');
+      
+      if (isZoomed) {
+        cardWrapper.classList.add('fullscreen-card-overlay');
+      } else {
+        cardWrapper.classList.remove('fullscreen-card-overlay');
+      }
+
+      // Añadir una transición suave específica para el zoom
+      card3D.classList.add('card-zoom-transition');
+      setTimeout(() => card3D.classList.remove('card-zoom-transition'), 600);
       
       const rect = card3D.getBoundingClientRect();
       const clickX = e.clientX || (rect.left + rect.width / 2);
@@ -750,7 +773,6 @@
       }
       playSweetChime();
       
-      // Aplicar transición inmediata para animar el zoom usando la posición actual del cursor
       const xPercent = Math.max(-1, Math.min(1, (clickX - (rect.left + rect.width / 2)) / (window.innerWidth * 0.45)));
       const yPercent = Math.max(-1, Math.min(1, (clickY - (rect.top + rect.height / 2)) / (window.innerHeight * 0.45)));
       applyCardTilt(xPercent, yPercent);
@@ -862,6 +884,7 @@
       if (params.get('modo') === 'compartido') {
         document.getElementById('customizeBtn').style.display = 'none';
         document.getElementById('shareBtn').style.display = 'none';
+        document.getElementById('copyMessageTextBtn').style.display = 'none'; // Aquí se oculta "Copiar Dedicatoria"
         
         const startMusicOnInteract = () => {
           if (currentAudioUrl && !isPlayingMusic) {
