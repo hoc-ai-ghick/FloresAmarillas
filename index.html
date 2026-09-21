@@ -56,11 +56,11 @@
     /* Pop-out element transforms */
     .popout-layer {
       transform: translateZ(65px) scale(1.06);
-      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
     .popout-ribbon {
       transform: translateZ(95px) scale(1.12);
-      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
     .popout-deep {
       transform: translateZ(35px);
@@ -365,12 +365,6 @@
               </g>
             </svg>
           </div>
-
-          <!-- Click Prompt -->
-          <div class="absolute -bottom-2 bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full shadow-lg border border-yellow-100 text-xs font-semibold text-yellow-600 flex items-center gap-1.5 pointer-events-none group-hover:scale-105 transition-all">
-            <span>✨</span>
-            <span>Toca las flores para la magia</span>
-          </div>
         </div>
 
         <!-- Bottom Card Text -->
@@ -422,10 +416,6 @@
               <p class="text-xs text-yellow-700/70 uppercase tracking-widest font-semibold">Con todo mi amor,</p>
               <p class="font-script text-2xl text-pink-500 font-bold" id="displaySender">Tu Pareja</p>
             </div>
-            <button id="openMagicConfettiBtn" class="bg-yellow-100 hover:bg-yellow-200 active:scale-95 text-yellow-800 text-xs px-3.5 py-2 rounded-xl transition-all flex items-center gap-1 font-medium shadow-sm">
-              <span>Lluvia de Pétalos</span>
-              <span>✨</span>
-            </button>
           </div>
         </div>
 
@@ -516,30 +506,49 @@
     const ribbonLayer = document.querySelector('.popout-ribbon');
 
     let isTouchActive = false;
+    let isZoomed = false;
 
     function applyCardTilt(xPercent, yPercent) {
       const rotateX = (yPercent * -26).toFixed(2);
       const rotateY = (xPercent * 26).toFixed(2);
 
-      card3D.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-      
-      if (bouquetLayer) {
-        const transX = (xPercent * 22).toFixed(2);
-        const transY = (yPercent * 22).toFixed(2);
-        bouquetLayer.style.transform = `translate3d(${transX}px, ${transY}px, 70px) scale(1.08)`;
-      }
-
-      if (ribbonLayer) {
-        const transX = (xPercent * 30).toFixed(2);
-        const transY = (yPercent * 30).toFixed(2);
-        ribbonLayer.style.transform = `translate3d(${transX}px, ${transY}px, 110px) scale(1.15)`;
+      if (!isZoomed) {
+        card3D.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        if (bouquetLayer) {
+          const transX = (xPercent * 22).toFixed(2);
+          const transY = (yPercent * 22).toFixed(2);
+          bouquetLayer.style.transform = `translate3d(${transX}px, ${transY}px, 65px) scale(1.06)`;
+        }
+        if (ribbonLayer) {
+          const transX = (xPercent * 30).toFixed(2);
+          const transY = (yPercent * 30).toFixed(2);
+          ribbonLayer.style.transform = `translate3d(${transX}px, ${transY}px, 95px) scale(1.12)`;
+        }
+      } else {
+        // Modo Expandido: El ramo sale agresivamente de la pantalla manteniendo movimiento
+        card3D.style.transform = `rotateX(${(yPercent * -10).toFixed(2)}deg) rotateY(${(xPercent * 10).toFixed(2)}deg)`;
+        if (bouquetLayer) {
+          const transX = (xPercent * 40).toFixed(2);
+          const transY = (yPercent * 40).toFixed(2);
+          bouquetLayer.style.transform = `translate3d(${transX}px, ${transY}px, 200px) scale(1.8)`;
+        }
+        if (ribbonLayer) {
+          const transX = (xPercent * 50).toFixed(2);
+          const transY = (yPercent * 50).toFixed(2);
+          ribbonLayer.style.transform = `translate3d(${transX}px, ${transY}px, 240px) scale(1.9)`;
+        }
       }
     }
 
     function resetCardTilt() {
       card3D.style.transform = `rotateX(0deg) rotateY(0deg)`;
-      if (bouquetLayer) bouquetLayer.style.transform = `translate3d(0px, 0px, 65px) scale(1.06)`;
-      if (ribbonLayer) ribbonLayer.style.transform = `translate3d(0px, 0px, 95px) scale(1.12)`;
+      if (!isZoomed) {
+        if (bouquetLayer) bouquetLayer.style.transform = `translate3d(0px, 0px, 65px) scale(1.06)`;
+        if (ribbonLayer) ribbonLayer.style.transform = `translate3d(0px, 0px, 95px) scale(1.12)`;
+      } else {
+        if (bouquetLayer) bouquetLayer.style.transform = `translate3d(0px, 0px, 200px) scale(1.8)`;
+        if (ribbonLayer) ribbonLayer.style.transform = `translate3d(0px, 0px, 240px) scale(1.9)`;
+      }
     }
 
     window.addEventListener('mousemove', (e) => {
@@ -729,24 +738,22 @@
     }
 
     card3D.addEventListener('click', (e) => {
+      isZoomed = !isZoomed;
+      
       const rect = card3D.getBoundingClientRect();
       const clickX = e.clientX || (rect.left + rect.width / 2);
       const clickY = e.clientY || (rect.top + rect.height / 2);
-      spawnFlowerBurst(clickX, clickY, 30);
+      
+      spawnFlowerBurst(clickX, clickY, isZoomed ? 45 : 20);
       for (let i = 0; i < 4; i++) {
         setTimeout(() => spawnScreenHeart(clickX + (Math.random() - 0.5) * 60, clickY + (Math.random() - 0.5) * 60), i * 70);
       }
       playSweetChime();
-    });
-
-    document.getElementById('openMagicConfettiBtn').addEventListener('click', (e) => {
-      const rect = e.target.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      spawnFlowerBurst(centerX, centerY, 45);
-      for (let i = 0; i < 6; i++) setTimeout(() => spawnScreenHeart(centerX, centerY), i * 90);
-      playSweetChime();
-      showToast('¡Lluvia de girasoles para ti! 🌻✨');
+      
+      // Aplicar transición inmediata para animar el zoom usando la posición actual del cursor
+      const xPercent = Math.max(-1, Math.min(1, (clickX - (rect.left + rect.width / 2)) / (window.innerWidth * 0.45)));
+      const yPercent = Math.max(-1, Math.min(1, (clickY - (rect.top + rect.height / 2)) / (window.innerHeight * 0.45)));
+      applyCardTilt(xPercent, yPercent);
     });
 
     /* ==========================================================
@@ -850,6 +857,22 @@
         currentAudioUrl = params.get('audio');
         customAudioEl.src = currentAudioUrl;
       }
+
+      // MODO LECTURA COMPARTIDO: Oculta botones de edición e inicia la música al interactuar
+      if (params.get('modo') === 'compartido') {
+        document.getElementById('customizeBtn').style.display = 'none';
+        document.getElementById('shareBtn').style.display = 'none';
+        
+        const startMusicOnInteract = () => {
+          if (currentAudioUrl && !isPlayingMusic) {
+            document.getElementById('musicToggleBtn').click();
+          }
+          document.removeEventListener('click', startMusicOnInteract);
+          document.removeEventListener('touchstart', startMusicOnInteract);
+        };
+        document.addEventListener('click', startMusicOnInteract, { once: true });
+        document.addEventListener('touchstart', startMusicOnInteract, { once: true });
+      }
     }
     loadDetailsFromUrl();
 
@@ -915,11 +938,17 @@
       url.searchParams.set('msg', letterContent.textContent.trim());
       if (currentAudioUrl && !currentAudioUrl.startsWith('blob:')) url.searchParams.set('audio', currentAudioUrl);
 
+      // Guardamos la URL actual sin el modo compartido para ti (el creador)
+      const senderUrl = url.toString();
+      window.history.replaceState({}, '', senderUrl);
+
+      // Agregamos el parámetro modo=compartido exclusivamente para la URL que se copiará al portapapeles
+      url.searchParams.set('modo', 'compartido');
       const targetUrl = url.toString();
-      window.history.replaceState({}, '', targetUrl);
+      
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(targetUrl).catch(() => fallbackCopyText(targetUrl));
-        showToast('¡Enlace personalizado copiado! Listo para enviar 💌', '🌻');
+        showToast('¡Enlace final copiado! Listo para enviar 💌', '🌻');
       } else {
         fallbackCopyText(targetUrl);
         showToast('¡Enlace copiado! Listo para enviar 💌', '🌻');
